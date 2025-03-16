@@ -1,5 +1,4 @@
 {
-  "extends": "../node_modules/@sanity/pkg-utils/tsconfig/strictest.json",
   "compilerOptions": {
     "target": "ES2022",
     "module": "NodeNext",
@@ -12,7 +11,12 @@
     "rootDir": "../src",
     "noPropertyAccessFromIndexSignature": false,
     "noUnusedLocals": true,
-    "noUnusedParameters": true
+    "noUnusedParameters": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true
   },
   "include": ["../src/**/*"],
   "exclude": ["../node_modules", "../dist", "../test"]
