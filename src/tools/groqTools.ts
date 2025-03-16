@@ -7,7 +7,7 @@ import {z} from 'zod'
 
 import config from '../config/config.js'
 import * as groqController from '../controllers/groq.js'
-import type {GroqSpecResult, GroqSpecification} from '../types/sharedTypes.js'
+import type {GroqSpecification, GroqSpecResult} from '../types/sharedTypes.js'
 import type {ToolProvider} from '../types/toolProvider.js'
 import type {ToolDefinition} from '../types/tools.js'
 import logger from '../utils/logger.js'
@@ -45,7 +45,7 @@ export class GroqToolProvider implements ToolProvider {
           } catch (error) {
             // Return a minimal valid GroqSpecResult with error information
             logger.error('Error retrieving GROQ specification:', error)
-            
+
             const fallbackSpec: GroqSpecification = {
               name: 'GROQ',
               version: 'unknown',
@@ -57,7 +57,7 @@ export class GroqToolProvider implements ToolProvider {
               functions: [],
               resources: []
             }
-            
+
             return {
               specification: fallbackSpec,
               source: `Error: ${error instanceof Error ? error.message : String(error)}`
@@ -85,7 +85,7 @@ export class GroqToolProvider implements ToolProvider {
           if (!args.query) {
             throw new Error('Query is required')
           }
-          
+
           return await groqController.searchContent(
             args.projectId,
             args.dataset,
@@ -108,10 +108,10 @@ export class GroqToolProvider implements ToolProvider {
           if (!args.projectId) {
             throw new Error('Project ID is required')
           }
-          
+
           // Use a default dataset if not provided
           const dataset = args.dataset || 'production'
-          
+
           return await groqController.searchContent(
             args.projectId,
             dataset,
@@ -138,7 +138,7 @@ export class GroqToolProvider implements ToolProvider {
           if (!args.dataset) {
             throw new Error('Dataset is required')
           }
-          
+
           const {projectId, dataset, documentId} = args
 
           if (Array.isArray(documentId)) {
@@ -175,14 +175,14 @@ export class GroqToolProvider implements ToolProvider {
           try {
             const projectId = args.projectId || config.projectId
             const dataset = args.dataset || config.dataset
-            
+
             if (!projectId || !dataset) {
               const errorMsg = 'Project ID and Dataset name are required. ' +
                 'Please set SANITY_PROJECT_ID and SANITY_DATASET in your environment variables ' +
                 'or provide them as parameters.'
               throw new Error(errorMsg)
             }
-            
+
             return await groqController.searchContent(
               projectId,
               dataset,
