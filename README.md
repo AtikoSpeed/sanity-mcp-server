@@ -24,15 +24,18 @@ This server implements the MCP protocol using stdio transport, making it suitabl
 The server provides the following tools:
 
 - **GROQ Queries**
+
   - `query`: Executes GROQ queries (formerly `searchContent`)
   - `subscribeToUpdates`: Subscribes to real-time updates for documents
   - `getGroqSpecification`: Gets the GROQ query language specification
 
 - **Document Retrieval**
+
   - `getDocument`: Gets a document by ID or multiple documents by their IDs
   - `getDocuments`: Gets multiple documents by their IDs (alternative to using `getDocument` with an array)
 
 - **Document Mutations**
+
   - `createDocument`: Creates a new document
   - `updateDocument`: Updates one or more existing documents
   - `mutateDocument`: Performs multiple operations on a single document
@@ -41,6 +44,7 @@ The server provides the following tools:
   - `updatePortableText`: Updates Portable Text fields (formerly `modifyPortableTextField`)
 
 - **Document Actions**
+
   - `publishDocument`: Publishes one or more documents
   - `unpublishDocument`: Unpublishes one or more documents
   - `createRelease`: Creates a new content release
@@ -51,10 +55,12 @@ The server provides the following tools:
   - `unpublishDocumentWithRelease`: Marks one or more documents for unpublishing when a release is published
 
 - **Schema Management**
+
   - `listSchemaTypes`: Lists available schema types
   - `getTypeSchema`: Gets detailed schema for a specific type
 
 - **Embeddings and Semantic Search**
+
   - `semanticSearch`: Performs semantic search on embeddings indices
   - `listEmbeddingsIndices`: Lists available embeddings indices
 
@@ -74,6 +80,21 @@ This project is built with TypeScript. To compile the TypeScript files to JavaSc
 
 ```bash
 npm run build
+```
+
+### Direct Execution with TSX (Recommended)
+
+For the most reliable execution, especially with Claude Desktop, we recommend using the TSX scripts that run the TypeScript files directly without requiring a build step:
+
+```bash
+# Start the main server directly
+npm run start:tsx
+
+# Run the test server for simple debugging
+npm run test:tsx
+
+# Development mode with TSX
+npm run dev:tsx
 ```
 
 ### Development Mode
@@ -100,13 +121,13 @@ npm start
 ### Using as a direct command line tool
 
 ```bash
-npm start
+npm run start:tsx  # Recommended direct execution
 ```
 
 Or after building:
 
 ```bash
-node dist/index.js
+npm start
 ```
 
 ### Integration with AI assistants
@@ -125,7 +146,8 @@ For Anthropic's Claude AI, you can configure it to use this MCP server by adding
     {
       "name": "sanity-mcp",
       "type": "mcp",
-      "path": "/path/to/sanity-mcp-server/dist/index.js",
+      "path": "/path/to/sanity-mcp-server/node_modules/.bin/tsx",
+      "args": ["/path/to/sanity-mcp-server/src/index.ts"],
       "env": {
         "SANITY_TOKEN": "your_sanity_api_token",
         "SANITY_PROJECT_ID": "your_sanity_project_id",
@@ -168,7 +190,6 @@ The project is organized as follows:
   - `unit/`: Unit tests
   - `integration/`: Integration tests
 - `schemas/`: Sanity schema files (not tracked in version control)
-
 
 ## License
 
