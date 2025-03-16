@@ -1,41 +1,44 @@
 #!/usr/bin/env node
-import {Server} from '@modelcontextprotocol/sdk/server/index.js'
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
   CallToolRequestSchema,
-  ListToolsRequestSchema
-} from '@modelcontextprotocol/sdk/types.js'
-import {zodToJsonSchema} from 'zod-to-json-schema'
+  ListToolsRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
+import { zodToJsonSchema } from "zod-to-json-schema";
 
-import * as toolsRegistry from './tools/index.js'
-import logger from './utils/logger.js'
-import {sanityTransport} from './utils/mcpTransport.js'
+import * as toolsRegistry from "./tools/index.js";
+import logger from "./utils/logger.js";
+import { sanityTransport } from "./utils/mcpTransport.js";
 
 // Create MCP server
 const server = new Server(
   {
-    name: 'Sanity MCP Server',
-    version: '0.1.1'
+    name: "Sanity MCP Server",
+    version: "0.1.1",
   },
   {
     capabilities: {
       tools: {},
     },
   }
-)
+);
+
+// Simple MCP server startup
+logger.info("Sanity MCP Server initializing...");
 
 // Handle tool listing request
 server.setRequestHandler(ListToolsRequestSchema, async () => {
-  const tools = toolsRegistry.getToolDefinitions()
-  logger.info(`Responding with ${tools.length} tools`)
+  const tools = toolsRegistry.getToolDefinitions();
+  logger.info(`Responding with ${tools.length} tools`);
 
   return {
     tools: tools.map((tool) => ({
       name: tool.name,
       description: tool.description,
       inputSchema: zodToJsonSchema(tool.parameters),
-    }))
-  }
-})
+    })),
+  };
+});
 
 /**
  * Format the tool execution result according to MCP specification
@@ -44,83 +47,91 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
  */
 function formatToolResult(result: unknown): string {
   // Ensure we have valid content for the response
-  let textContent: string
+  let textContent: string;
 
   // Special handling for different result types
-  if (typeof result === 'string') {
-    textContent = result
+  if (typeof result === "string") {
+    textContent = result;
   } else if (result === null || result === undefined) {
-    textContent = ''
+    textContent = "";
   } else {
     // For objects and arrays, format as JSON
     try {
-      textContent = JSON.stringify(result, null, 2)
+      textContent = JSON.stringify(result, null, 2);
     } catch (error) {
-      textContent = String(result)
+      textContent = String(result);
     }
   }
 
-  return textContent
+  return textContent;
 }
 
 // Handle tool execution request
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
     if (!request.params.arguments) {
-      throw new Error('Arguments are required')
+      throw new Error("Arguments are required");
     }
 
-    logger.info(`Executing tool: ${request.params.name}`)
+    logger.info(`Executing tool: ${request.params.name}`);
     const result = await toolsRegistry.executeTool(
       request.params.name,
       request.params.arguments
-    )
+    );
 
     // Format result according to MCP specification
-    const textContent = formatToolResult(result)
+    const textContent = formatToolResult(result);
 
+    // Return with array format for content to match Claude Desktop expectations
     return {
-      content: textContent
-    }
+      content: [{ type: "text", text: textContent }],
+    };
   } catch (error: unknown) {
     // Log errors to stderr to avoid interfering with MCP protocol
     logger.error(
       `Error executing tool ${request.params.name}: ${error instanceof Error ? error.message : String(error)}`
-    )
+    );
 
-    // Return a structured error message
+    // Return error with the same array format
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return {
-      content: JSON.stringify({
-        error: error instanceof Error ? error.message : String(error)
-      })
-    }
+      content: [
+        { type: "text", text: JSON.stringify({ error: errorMessage }) },
+      ],
+    };
   }
-})
+});
 
-logger.info('Starting Sanity MCP Server...')
+logger.info("Starting Sanity MCP Server...");
 
 // Use our enhanced transport that ensures proper stdout/stderr handling
-server.connect(sanityTransport)
+server
+  .connect(sanityTransport)
   .then(() => {
-    logger.info('Sanity MCP Server connected successfully!')
+    logger.info("Sanity MCP Server connected successfully!");
   })
   .catch((error) => {
-    logger.error('Failed to connect server:', error)
-    process.exit(1)
-  })
+    logger.error("Failed to connect server:", error);
+    process.exit(1);
+  });
 
 // Specific stdout data debugging help
-process.stdout.on('error', (err) => {
-  logger.error('Error writing to stdout:', err)
-})
+process.stdout.on("error", (err) => {
+  logger.error("Error writing to stdout:", err);
+});
 
 // Make sure SIGINT and SIGTERM are handled properly
-process.on('SIGINT', () => {
-  logger.info('Received SIGINT. Shutting down server...')
-  process.exit(0)
-})
+process.on("SIGINT", () => {
+  logger.info("Received SIGINT. Shutting down server...");
+  process.exit(0);
+});
 
-process.on('SIGTERM', () => {
-  logger.info('Received SIGTERM. Shutting down server...')
-  process.exit(0)
-})
+process.on("SIGTERM", () => {
+  logger.info("Received SIGTERM. Shutting down server...");
+  process.exit(0);
+});
+
+// Simple logging of MCP server startup
+logger.info(
+  "Sanity MCP Server initialized with Claude Desktop compatible response format"
+);
